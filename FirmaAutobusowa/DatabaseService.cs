@@ -16,6 +16,28 @@ namespace FirmaAutobusowa
         }
 
         private IDbConnection Connection => new MySqlConnection(_connectionString);
+        public int ExecuteNonQuery(string query, Dictionary<string, object> parameters)
+        {
+            using (var conn = Connection) // łączymy sie z bazą, uzywamy using zeby miec pewność ze zamknie połaczenie z bazą po wykonaniu kodu
+            { // ogolnie using uzywamy zawsze jak chcemy zwolnić zasoby po zakonczeniu. czyli np. łaczymy sie z baza, wykonujemy zapytanie i zamykamy od razu
+                conn.Open();
+                using (var cmd = conn.CreateCommand())
+                {
+                    cmd.CommandText = query; //zapytanie sql
+
+                    foreach (var param in parameters)
+                    {
+                        var dbParam = cmd.CreateParameter();
+                        dbParam.ParameterName = param.Key;
+                        dbParam.Value = param.Value;
+                        cmd.Parameters.Add(dbParam);
+                    }
+
+                    return cmd.ExecuteNonQuery(); // a tu wykonuje zapytanie
+                }
+            }
+        }
+
 
         public IEnumerable<T> GetAllItemsFromTable<T>(Table table)
         {

@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Data;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -141,162 +142,234 @@ namespace FirmaAutobusowa
 
         private void AddItemButton_Click(object sender, RoutedEventArgs e)
         {
-            var selectedTable = (DatabaseService.Table)Table.SelectedItem;
-
-            switch (selectedTable)
+            try
             {
-                // tu w zaleznosci od wybranej tabeli iterujemy po stackPanelu a potem po jego elementach
-                //albo textbox albo datapicker i ustawiamy wlasciwosci obiektow odpowiedzialnych za dana tabele na podstawie tego co w textboxie
-                // i potem sa pobierane do zapytania INSERT w metodzie AddTableItem w DatabaseService
-                case DatabaseService.Table.BUS:
-                    var bus = new Bus();
+                var selectedTable = (DatabaseService.Table)Table.SelectedItem;
 
-                    foreach (var child in FormPanel.Children)
-                    {
-                        if (child is TextBox tb)
+                switch (selectedTable)
+                {
+                    // tu w zaleznosci od wybranej tabeli iterujemy po stackPanelu a potem po jego elementach
+                    //albo textbox albo datapicker i ustawiamy wlasciwosci obiektow odpowiedzialnych za dana tabele na podstawie tego co w textboxie
+                    // i potem sa pobierane do zapytania INSERT w metodzie AddTableItem w DatabaseService
+                    case DatabaseService.Table.BUS:
+                        var bus = new Bus();
+
+                        foreach (var child in FormPanel.Children)
                         {
-                            switch (tb.Name)
+                            if (child is TextBox tb)
                             {
-                                case "RegBox":
-                                    bus.Registration_number = tb.Text;
-                                    break;
-                                case "SeatsBox":
-                                    bus.Number_of_seats = int.Parse(tb.Text);
-                                    break;
-                                case "YearBox":
-                                    bus.Year_of_production = short.Parse(tb.Text);
-                                    break;
-                                case "MarkBox":
-                                    bus.Mark = tb.Text;
-                                    break;
-                                case "ModelBox":
-                                    bus.Model = tb.Text;
-                                    break;
-                            }
-                        }
-                        else if (child is DatePicker dp && dp.Name == "InspectPicker")
-                        {
-                            bus.Date_of_next_inspection = dp.SelectedDate ?? DateTime.Now;
-                        }
-                    }
-
-                    _db.AddTableItem(DatabaseService.Table.BUS, bus);
-                    break;
-
-                case DatabaseService.Table.CLIENT:
-                    var client = new Client();
-
-                    foreach (var child in FormPanel.Children)
-                    {
-                        if (child is TextBox tb)
-                        {
-                            switch (tb.Name)
-                            {
-                                case "ClientNameBox":
-                                    client.Name = tb.Text;
-                                    break;
-                                case "AddressBox":
-                                    client.Address = tb.Text;
-                                    break;
-                                case "PhoneBox":
-                                    client.Phone_number = int.Parse(tb.Text);
-                                    break;
-                            }
-                        }
-                    }
-
-                    _db.AddTableItem(DatabaseService.Table.CLIENT, client);
-                    break;
-
-                case DatabaseService.Table.DRIVER:
-                    var driver = new Driver();
-
-                    foreach (var child in FormPanel.Children)
-                    {
-                        if (child is TextBox tb)
-                        {
-                            switch (tb.Name)
-                            {
-                                case "DriverNameBox":
-                                    driver.Name = tb.Text;
-                                    break;
-                                case "LastNameBox":
-                                    driver.Last_name = tb.Text;
-                                    break;
-                                case "CategoryBox":
-                                    driver.Driving_license_category = tb.Text;
-                                    break;
-                                case "SerialBox":
-                                    driver.Driving_license_serial_number = int.Parse(tb.Text);
-                                    break;
-                            }
-                        }
-                    }
-
-                    _db.AddTableItem(DatabaseService.Table.DRIVER, driver);
-                    break;
-                case DatabaseService.Table.CONTRACT:
-                    var contract = new Contract();
-
-                    foreach (var child in FormPanel.Children)
-                    {
-                        switch (child)
-                        {
-                            case TextBox tb:
                                 switch (tb.Name)
                                 {
-                                    case "OriginBox":
-                                        contract.Origin_address = tb.Text;
+                                    case "RegBox":
+                                        bus.Registration_number = tb.Text;
                                         break;
-                                    case "DestinationBox":
-                                        contract.Destination_address = tb.Text;
+                                    case "SeatsBox":
+                                        bus.Number_of_seats = int.Parse(tb.Text);
                                         break;
-                                    case "DriverIdBox":
-                                        contract.Driver_ID = int.Parse(tb.Text);
+                                    case "YearBox":
+                                        bus.Year_of_production = short.Parse(tb.Text);
                                         break;
-                                    case "RegNumberBox":
-                                        contract.Registration_number = tb.Text;
+                                    case "MarkBox":
+                                        bus.Mark = tb.Text;
                                         break;
-                                    case "StatusBox":
-                                        contract.Status = tb.Text;
-                                        break;
-                                    case "ClientIdBox":
-                                        contract.Client_ID = int.Parse(tb.Text);
-                                        break;
-                                    case "RequestedSeatsBox":
-                                        contract.Requested_seats = int.Parse(tb.Text);
+                                    case "ModelBox":
+                                        bus.Model = tb.Text;
                                         break;
                                 }
-                                break;
-
-                            case DatePicker dp:
-                                switch (dp.Name)
-                                {
-                                    case "StartDatePicker":
-                                        contract.Start_date = dp.SelectedDate ?? DateTime.Now;
-                                        break;
-                                    case "PlannedEndDatePicker":
-                                        contract.Planned_end_date = dp.SelectedDate ?? DateTime.Now;
-                                        break;
-                                    case "RealEndDatePicker":
-                                        contract.Real_end_date = dp.SelectedDate; // może być null
-                                        break;
-                                }
-                                break;
+                            }
+                            else if (child is DatePicker dp && dp.Name == "InspectPicker")
+                            {
+                                bus.Date_of_next_inspection = dp.SelectedDate ?? DateTime.Now;
+                            }
                         }
-                    }
 
-                    _db.AddTableItem(DatabaseService.Table.CONTRACT, contract);
-                    break;
+                        _db.AddTableItem(DatabaseService.Table.BUS, bus);
+                        break;
+
+                    case DatabaseService.Table.CLIENT:
+                        var client = new Client();
+
+                        foreach (var child in FormPanel.Children)
+                        {
+                            if (child is TextBox tb)
+                            {
+                                switch (tb.Name)
+                                {
+                                    case "ClientNameBox":
+                                        client.Name = tb.Text;
+                                        break;
+                                    case "AddressBox":
+                                        client.Address = tb.Text;
+                                        break;
+                                    case "PhoneBox":
+                                        client.Phone_number = int.Parse(tb.Text);
+                                        break;
+                                }
+                            }
+                        }
+
+                        _db.AddTableItem(DatabaseService.Table.CLIENT, client);
+                        break;
+
+                    case DatabaseService.Table.DRIVER:
+                        var driver = new Driver();
+
+                        foreach (var child in FormPanel.Children)
+                        {
+                            if (child is TextBox tb)
+                            {
+                                switch (tb.Name)
+                                {
+                                    case "DriverNameBox":
+                                        driver.Name = tb.Text;
+                                        break;
+                                    case "LastNameBox":
+                                        driver.Last_name = tb.Text;
+                                        break;
+                                    case "CategoryBox":
+                                        driver.Driving_license_category = tb.Text;
+                                        break;
+                                    case "SerialBox":
+                                        driver.Driving_license_serial_number = int.Parse(tb.Text);
+                                        break;
+                                }
+                            }
+                        }
+
+                        _db.AddTableItem(DatabaseService.Table.DRIVER, driver);
+                        break;
+                    case DatabaseService.Table.CONTRACT:
+                        var contract = new Contract();
+
+                        foreach (var child in FormPanel.Children)
+                        {
+                            switch (child)
+                            {
+                                case TextBox tb:
+                                    switch (tb.Name)
+                                    {
+                                        case "OriginBox":
+                                            contract.Origin_address = tb.Text;
+                                            break;
+                                        case "DestinationBox":
+                                            contract.Destination_address = tb.Text;
+                                            break;
+                                        case "DriverIdBox":
+                                            contract.Driver_ID = int.Parse(tb.Text);
+                                            break;
+                                        case "RegNumberBox":
+                                            contract.Registration_number = tb.Text;
+                                            break;
+                                        case "StatusBox":
+                                            contract.Status = tb.Text;
+                                            break;
+                                        case "ClientIdBox":
+                                            contract.Client_ID = int.Parse(tb.Text);
+                                            break;
+                                        case "RequestedSeatsBox":
+                                            contract.Requested_seats = int.Parse(tb.Text);
+                                            break;
+                                    }
+                                    break;
+
+                                case DatePicker dp:
+                                    switch (dp.Name)
+                                    {
+                                        case "StartDatePicker":
+                                            contract.Start_date = dp.SelectedDate ?? DateTime.Now;
+                                            break;
+                                        case "PlannedEndDatePicker":
+                                            contract.Planned_end_date = dp.SelectedDate ?? DateTime.Now;
+                                            break;
+                                        case "RealEndDatePicker":
+                                            contract.Real_end_date = dp.SelectedDate; // może być null
+                                            break;
+                                    }
+                                    break;
+                            }
+                        }
+
+                        _db.AddTableItem(DatabaseService.Table.CONTRACT, contract);
+                        break;
+                }
+
+                LoadTableData(selectedTable); // odświeżenie widoku po dodaniu pozycji do tabeli
             }
-
-            LoadTableData(selectedTable); // odświeżenie widoku po dodaniu pozycji do tabeli
+            catch(Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+                return;
+            }
         }
-
 
         private void DeleteItemButton_Click(object sender, RoutedEventArgs e)
         {
-            //usuwanie z bazy
+            if (Table.SelectedItem is not DatabaseService.Table selectedTable)
+            {
+                MessageBox.Show("Wybierz tabele"); // jak nic nie wybrane, to wybierz (czyli jak wcisniesz usun ale nie masz zadnej tabeli wybranej)
+                return;
+            }
+
+            var selectedItem = TableGrid.SelectedItem;
+            if (selectedItem == null)
+            {
+                MessageBox.Show("Zaznacz pozycje do usuniecia");
+                return;
+            }
+
+            string query = "";
+            Dictionary<string, object> parameters = new();
+
+            // w zaleznosci od tabeli, usun zaznaczony wiersz z tabeli z bazy
+            // czyli zapytanie po PRIMARY KEY
+            switch (selectedTable)
+            {
+                case DatabaseService.Table.DRIVER:
+                    var driver = selectedItem as Driver;
+                    query = "DELETE FROM Driver WHERE Driver_ID = @id";
+                    parameters.Add("@id", driver.Driver_ID);
+                    break;
+
+                case DatabaseService.Table.BUS:
+                    var bus = selectedItem as Bus;
+                    query = "DELETE FROM Bus WHERE Registration_number = @id";
+                    parameters.Add("@id", bus.Registration_number);
+                    break;
+
+                case DatabaseService.Table.CLIENT:
+                    var client = selectedItem as Client;
+                    query = "DELETE FROM Client WHERE Client_ID = @id";
+                    parameters.Add("@id", client.Client_ID);
+                    break;
+
+                case DatabaseService.Table.CONTRACT:
+                    var contract = selectedItem as Contract;
+                    query = "DELETE FROM Contract WHERE Contract_ID = @id";
+                    parameters.Add("@id", contract.Contract_ID);
+                    break;
+
+                default:
+                    MessageBox.Show("Nieobsługiwana tabela");
+                    return;
+            }
+
+            try
+            {
+                int rowsAffected = _db.ExecuteNonQuery(query, parameters);
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Pozycja usunieta");
+                    LoadTableData(selectedTable); // przeładuj dane
+                }
+                else
+                {
+                    MessageBox.Show("Nie udało się usunac");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd podczas usuwania: {ex.Message}");
+            }
         }
 
     }
