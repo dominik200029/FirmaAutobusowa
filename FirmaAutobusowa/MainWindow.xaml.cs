@@ -67,6 +67,7 @@ namespace FirmaAutobusowa
                     break;
 
                 case DatabaseService.Table.DRIVER:
+                    FormPanel.Children.Add(CreateTextBox("DriverIDBox", "ID kierowcy"));
                     FormPanel.Children.Add(CreateTextBox("DriverNameBox", "Imię"));
                     FormPanel.Children.Add(CreateTextBox("LastNameBox", "Nazwisko"));
                     FormPanel.Children.Add(CreateTextBox("CategoryBox", "Kategoria PJ"));
@@ -74,12 +75,14 @@ namespace FirmaAutobusowa
                     break;
 
                 case DatabaseService.Table.CLIENT:
+                    FormPanel.Children.Add(CreateTextBox("ClientIDBox", "ID klienta"));
                     FormPanel.Children.Add(CreateTextBox("ClientNameBox", "Nazwa klienta"));
                     FormPanel.Children.Add(CreateTextBox("AddressBox", "Adres"));
                     FormPanel.Children.Add(CreateTextBox("PhoneBox", "Telefon"));
                     break;
 
                 case DatabaseService.Table.CONTRACT:
+                    FormPanel.Children.Add(CreateTextBox("ContractIDBox", "ID kontraktu"));
                     FormPanel.Children.Add(CreateTextBox("OriginBox", "Start"));
                     FormPanel.Children.Add(CreateTextBox("DestinationBox", "Cel"));
                     FormPanel.Children.Add(CreateDatePicker("StartDatePicker"));
@@ -195,6 +198,9 @@ namespace FirmaAutobusowa
                             {
                                 switch (tb.Name)
                                 {
+                                    case "ClientIDBox":
+                                        client.Client_ID = int.Parse(tb.Text);
+                                        break;
                                     case "ClientNameBox":
                                         client.Name = tb.Text;
                                         break;
@@ -220,6 +226,9 @@ namespace FirmaAutobusowa
                             {
                                 switch (tb.Name)
                                 {
+                                    case "DriverIDBox":
+                                        driver.Driver_ID = int.Parse(tb.Text);
+                                        break;
                                     case "DriverNameBox":
                                         driver.Name = tb.Text;
                                         break;
@@ -248,6 +257,9 @@ namespace FirmaAutobusowa
                                 case TextBox tb:
                                     switch (tb.Name)
                                     {
+                                        case "ContractIDBox":
+                                            contract.Contract_ID = int.Parse(tb.Text);
+                                            break;
                                         case "OriginBox":
                                             contract.Origin_address = tb.Text;
                                             break;
@@ -371,6 +383,213 @@ namespace FirmaAutobusowa
                 MessageBox.Show($"Błąd podczas usuwania: {ex.Message}");
             }
         }
+        private void RefreshButton_Click(object sender, EventArgs e)
+        {
+            if (Table.SelectedItem is not DatabaseService.Table selectedTable)
+            {
+                MessageBox.Show("Wybierz tabele"); // jak nic nie wybrane, to wybierz (czyli jak wcisniesz usun ale nie masz zadnej tabeli wybranej)
+                return;
+            }
+
+            var selectedItem = TableGrid.SelectedItem;
+            LoadTableData(selectedTable); // przeładuj dane
+
+        }
+        private void EditButton_Click(object sender, EventArgs e)
+        {
+            if (TableGrid.SelectedItem == null)
+            {
+                MessageBox.Show("Proszę zaznaczyć pozycję do edycji.");
+                return;
+            }
+
+            var selectedTable = (DatabaseService.Table)Table.SelectedItem;
+
+            string query = "";
+            Dictionary<string, object> parameters = new();
+
+            switch (selectedTable)
+            {
+                case DatabaseService.Table.BUS:
+                    var selectedBus = (Bus)TableGrid.SelectedItem;
+
+                    int seats = TryParseInt(GetTextBoxValueIfChanged("SeatsBox", "Miejsca"), selectedBus.Number_of_seats);
+                    short year = TryParseShort(GetTextBoxValueIfChanged("YearBox", "Rok"), (short)selectedBus.Year_of_production);
+                    string mark = GetTextBoxValueIfChanged("MarkBox", "Marka") ?? selectedBus.Mark;
+                    string model = GetTextBoxValueIfChanged("ModelBox", "Model") ?? selectedBus.Model;
+                    DateTime inspect = GetDatePickerValueOrDefault("InspectPicker", selectedBus.Date_of_next_inspection);
+
+                    query = @"UPDATE Bus SET 
+                        Number_of_seats = @seats,
+                        Year_of_production = @year,
+                        Mark = @mark,
+                        Model = @model,
+                        Date_of_next_inspection = @inspect
+                      WHERE Registration_number = @reg";
+
+                    parameters = new()
+            {
+                {"@seats", seats},
+                {"@year", year},
+                {"@mark", mark},
+                {"@model", model},
+                {"@inspect", inspect},
+                {"@reg", selectedBus.Registration_number}
+            };
+                    break;
+
+                case DatabaseService.Table.CLIENT:
+                    var selectedClient = (Client)TableGrid.SelectedItem;
+
+                    string clientName = GetTextBoxValueIfChanged("ClientNameBox", "Nazwa klienta") ?? selectedClient.Name;
+                    string address = GetTextBoxValueIfChanged("AddressBox", "Adres") ?? selectedClient.Address;
+                    int phone = TryParseInt(GetTextBoxValueIfChanged("PhoneBox", "Telefon"), selectedClient.Phone_number);
+
+                    query = @"UPDATE Client SET 
+                        Name = @name,
+                        Address = @address,
+                        Phone_number = @phone
+                      WHERE Client_ID = @id";
+
+                    parameters = new()
+            {
+                {"@name", clientName},
+                {"@address", address},
+                {"@phone", phone},
+                {"@id", selectedClient.Client_ID}
+            };
+                    break;
+
+                case DatabaseService.Table.DRIVER:
+                    var selectedDriver = (Driver)TableGrid.SelectedItem;
+
+                    string firstName = GetTextBoxValueIfChanged("DriverNameBox", "Imię") ?? selectedDriver.Name;
+                    string lastName = GetTextBoxValueIfChanged("LastNameBox", "Nazwisko") ?? selectedDriver.Last_name;
+                    string category = GetTextBoxValueIfChanged("CategoryBox", "Kategoria PJ") ?? selectedDriver.Driving_license_category;
+                    int serial = TryParseInt(GetTextBoxValueIfChanged("SerialBox", "Nr prawa jazdy"), selectedDriver.Driving_license_serial_number);
+
+                    query = @"UPDATE Driver SET 
+                        Name = @name,
+                        Last_name = @lastName,
+                        Driving_license_category = @category,
+                        Driving_license_serial_number = @serial
+                      WHERE Driver_ID = @id";
+
+                    parameters = new()
+            {
+                {"@name", firstName},
+                {"@lastName", lastName},
+                {"@category", category},
+                {"@serial", serial},
+                {"@id", selectedDriver.Driver_ID}
+            };
+                    break;
+
+                case DatabaseService.Table.CONTRACT:
+                    var selectedContract = (Contract)TableGrid.SelectedItem;
+
+                    string origin = GetTextBoxValueIfChanged("OriginBox", "Start") ?? selectedContract.Origin_address;
+                    string destination = GetTextBoxValueIfChanged("DestinationBox", "Cel") ?? selectedContract.Destination_address;
+
+                    DateTime startDate = GetDatePickerValueOrDefault("StartDatePicker", selectedContract.Start_date);
+                    DateTime plannedEndDate = GetDatePickerValueOrDefault("PlannedEndDatePicker", selectedContract.Planned_end_date);
+                    DateTime? realEndDate = GetDatePickerNullableValue("RealEndDatePicker"); // może być null
+
+                    string status = GetTextBoxValueIfChanged("StatusBox", "Status") ?? selectedContract.Status;
+
+                    int driverId = TryParseInt(GetTextBoxValueIfChanged("DriverIdBox", "ID kierowcy"), selectedContract.Driver_ID);
+                    string regNum = GetTextBoxValueIfChanged("RegNumberBox", "Nr rejestracyjny") ?? selectedContract.Registration_number;
+                    int clientId = TryParseInt(GetTextBoxValueIfChanged("ClientIdBox", "ID klienta"), selectedContract.Client_ID);
+                    int requestedSeats = TryParseInt(GetTextBoxValueIfChanged("SeatsRequestedBox", "Żądane miejsca"), selectedContract.Requested_seats);
+
+                    query = @"UPDATE Contract SET
+                        Origin_address = @origin,
+                        destination_address = @destination,
+                        start_date = @startDate,
+                        planned_end_date = @plannedEndDate,
+                        real_end_date = @realEndDate,
+                        status = @status,
+                        driver_id = @driverId,
+                        registration_number = @regNum,
+                        client_ID = @clientId,
+                        requested_seats = @requestedSeats
+                      WHERE Contract_ID = @id";
+
+                    parameters = new()
+            {
+                {"@origin", origin},
+                {"@destination", destination},
+                {"@startDate", startDate},
+                {"@plannedEndDate", plannedEndDate},
+                {"@realEndDate", (object?)realEndDate ?? DBNull.Value},
+                {"@status", status},
+                {"@driverId", driverId},
+                {"@regNum", regNum},
+                {"@clientId", clientId},
+                {"@requestedSeats", requestedSeats},
+                {"@id", selectedContract.Contract_ID}
+            };
+                    break;
+
+                default:
+                    MessageBox.Show("Nieznana tabela");
+                    return;
+            }
+
+            try
+            {
+                int rowsAffected = _db.ExecuteNonQuery(query, parameters);
+                if (rowsAffected > 0)
+                {
+                    MessageBox.Show("Edycja zakończona sukcesem.");
+                    LoadTableData(selectedTable);
+                }
+                else
+                {
+                    MessageBox.Show("Nie zmieniono żadnego rekordu.");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Błąd podczas aktualizacji: {ex.Message}");
+            }
+        }
+
+        private string GetTextBoxValueIfChanged(string name, string placeholder)
+        {
+            var tb = FormPanel.Children.OfType<TextBox>().FirstOrDefault(t => t.Name == name);
+            if (tb == null)
+                throw new Exception($"Brak TextBoxa: {name}");
+
+            if (tb.Text == placeholder)
+                return null;
+
+            return tb.Text;
+        }
+
+        private int TryParseInt(string input, int defaultValue)
+        {
+            return int.TryParse(input, out int val) ? val : defaultValue;
+        }
+
+        private short TryParseShort(string input, short defaultValue)
+        {
+            return short.TryParse(input, out short val) ? val : defaultValue;
+        }
+
+        private DateTime GetDatePickerValueOrDefault(string name, DateTime defaultValue)
+        {
+            var dp = FormPanel.Children.OfType<DatePicker>().FirstOrDefault(d => d.Name == name);
+            return dp?.SelectedDate ?? defaultValue;
+        }
+
+        private DateTime? GetDatePickerNullableValue(string name)
+        {
+            var dp = FormPanel.Children.OfType<DatePicker>().FirstOrDefault(d => d.Name == name);
+            return dp?.SelectedDate;
+        }
+
+
 
     }
 }

@@ -37,8 +37,6 @@ namespace FirmaAutobusowa
                 }
             }
         }
-
-
         public IEnumerable<T> GetAllItemsFromTable<T>(Table table)
         {
             // zwraca wszystkie pozycje z tabeli
